@@ -5,6 +5,7 @@ import sys
 import csv
 import json
 
+
 result = pd.read_csv('ex6.csv')
 result = pd.read_csv('ex6.csv', nrows=5)
 chunker = pd.read_csv('ex6.csv', chunksize=1000)
@@ -47,3 +48,5 @@ result = json.loads(obj)
 asjson = json.dumps(result)
 
 siblings = DataFrame(result['siblings'], columns=['name', 'age'])
+
+frame = pd.read_csv('ex1.csv')
