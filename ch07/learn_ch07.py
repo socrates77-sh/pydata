@@ -173,4 +173,86 @@ data.describe()
 df = DataFrame(np.arange(5 * 4).reshape(5, 4))
 sampler = np.random.permutation(5)
 
-#228
+val = 'a,b,  guido'
+val.split(',')
+pieces = [x.strip() for x in val.split(',')]
+'::'.join(pieces)
+
+import re
+
+text = 'foo  bar\t baz  \tqux'
+
+re.split('\s+', text)
+regex = re.compile('\s+')
+regex.split(text)
+regex.findall(text)
+
+text = """Dave dave@google.com
+Steve steve@gmail.com
+Rob rob@gmail.com
+Ryan ryan@yahoo.com
+"""
+pattern = r'[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}'
+regex = re.compile(pattern, flags=re.IGNORECASE)
+regex.findall(text)
+
+m = regex.search(text)
+text[m.start():m.end()]
+
+regex.match(text)
+s = regex.sub('REDACTED', text)
+
+pattern = r'([A-Z0-9._%+-]+)@([A-Z0-9.-]+)\.([A-Z]{2,4})'
+regex = re.compile(pattern, flags=re.IGNORECASE)
+m = regex.match('wesm@bright.net')
+m.groups()
+regex.findall(text)
+print(regex.sub(r'Username: \1, Domain: \2, Suffix: \3', text))
+
+regex = re.compile(r"""
+(?P<username>[A-Z0-9._%+-]+)
+@
+(?P<domain>[A-Z0-9.-]+)
+\.
+(?P<suffix>[A-Z]{2,4})
+""", flags=re.IGNORECASE | re.VERBOSE)
+m = regex.match('wesm@bright.net')
+m.groupdict()
+
+data = {'Dave': 'dave@google.com',
+        'Steve': 'steve@gmail.com',
+        'Rob': 'rob@gmail.com',
+        'Ryan': 'ryan@yahoo.com',
+        'Wes': np.nan}
+data = Series(data)
+data.isnull()
+data.str.contains('gmail')
+pattern = r'([A-Z0-9._%+-]+)@([A-Z0-9.-]+)\.([A-Z]{2,4})'
+data.str.findall(pattern, flags=re.IGNORECASE)
+matches = data.str.match(pattern, flags=re.IGNORECASE)
+
+import json
+db = json.load(open('foods-2011-10-03.json'))
+len(db)
+
+nutrients = DataFrame(db[0]['nutrients'])
+info_keys = ['description', 'group', 'id',  'manufacturer']
+info = DataFrame(db, columns=info_keys)
+pd.value_counts(info.group)
+
+nutrients = []
+for rec in db:
+    fnuts = DataFrame(rec['nutrients'])
+    fnuts['id'] = rec['id']
+    nutrients.append(fnuts)
+nutrients = pd.concat(nutrients, ignore_index=True)
+nutrients.duplicated().sum()
+nutrients = nutrients.drop_duplicates()
+
+col_mapping = {'description': 'food',
+               'group': 'fgroup'}
+info = info.rename(columns=col_mapping, copy=False)
+col_mapping = {'description': 'nutrient',
+               'group': 'nutgroup'}
+nutrients = nutrients.rename(columns=col_mapping, copy=False)
+ndata = pd.merge(nutrients, info, on='id', how='outer')
