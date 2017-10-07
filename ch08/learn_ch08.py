@@ -203,4 +203,8 @@ for code, ax in zip(to_plot, axes.flat):
     m = basic_haiti_map(ax, lllat=lllat, urlat=urlat, lllon=lllon, urlon=urlon)
     cat_data = data[data['category_%s' % code] == 1]
 
+x, y = m(cat_data['LONGITUDE'], cat_data['LATITUDE'])
+m.plot(x, y, 'k.', alpha=0.5)
+ax.set_title('%s: %s' % (code, english_mapping[code]))
+
 plt.show()
