@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from pandas import Series, DataFrame
+import matplotlib.pyplot as plt
 
 df = DataFrame({'key1': ['a', 'a', 'b', 'b', 'a'],
                 'key2': ['one', 'two', 'one', 'two', 'one'],
@@ -149,4 +150,108 @@ def draw(deck, n=5):
 
 draw(deck)
 
-#296
+df = DataFrame({'category': ['a', 'a', 'a', 'a', 'b', 'b', 'b', 'b'],
+                'data': np.random.randn(8),
+                'weights': np.random.rand(8)})
+grouped = df.groupby('category')
+get_wavg = lambda g: np.average(g['data'], weights=g['weights'])
+grouped.apply(get_wavg)
+
+close_px = pd.read_csv('stock_px.csv', parse_dates=True, index_col=0)
+rets = close_px.pct_change().dropna()
+spx_corr = lambda x: x.corrwith(x['SPX'])
+by_year = rets.groupby(lambda x: x.year)
+by_year.apply(spx_corr)
+by_year.apply(lambda g: g['AAPL'].corr(g['MSFT']))
+
+tips.pivot_table(index=['sex', 'smoke'])
+tips.pivot_table(['tip_pct', 'size'], index=['sex', 'day'], columns='smoker')
+tips.pivot_table(['tip_pct', 'size'], index=['sex', 'day'], columns='smoker',
+                 margins=True)
+tips.pivot_table(['tip_pct', 'size'], index=['sex', 'day'], columns='smoker',
+                 margins=True, aggfunc=len)
+tips.pivot_table('size', index=['time', 'sex', 'smoker'], columns='day',
+                 aggfunc=sum, fill_value=0)
+pd.crosstab([tips['time'], tips['day']], tips['smoker'], margins=True)
+
+fec = pd.read_csv('P00000001-ALL.csv')
+unique_cands = fec.cand_nm.unique()
+
+parties = {'Bachmann, Michelle': 'Republican',
+           'Cain, Herman': 'Republican',
+           'Gingrich, Newt': 'Republican',
+           'Huntsman, Jon': 'Republican',
+           'Johnson, Gary Earl': 'Republican',
+           'McCotter, Thaddeus G': 'Republican',
+           'Obama, Barack': 'Democrat',
+           'Paul, Ron': 'Republican',
+           'Pawlenty, Timothy': 'Republican',
+           'Perry, Rick': 'Republican',
+           Roemer, Charles E. 'Buddy' III: 'Republican',
+           'Romney, Mitt': 'Republican',
+           'Santorum, Rick': 'Republican'}
+
+fec.cand_nm[123456:123461]
+fec.cand_nm[123456:123461].map(parties)
+fec['party'] = fec.cand_nm.map(parties)
+fec['party'].value_counts()
+(fec.contb_receipt_amt > 0).value_counts()
+fec = fec[fec.contb_receipt_amt > 0]
+fec_mrbo = fec[fec.cand_nm.isin(['Obama, Barack', 'Romney, Mitt'])]
+
+fec.contbr_occupation.value_counts()[:10]
+
+occ_mapping = {
+    'INFORMATION REQUESTED PER BEST EFFORTS': 'NOT PROVIDED',
+    'INFORMATION REQUESTED': 'NOT PROVIDED',
+    'INFORMATION REQUESTED (BEST EFFORTS)': 'NOT PROVIDED',
+    'C.E.O.': 'CEO'
+}
+
+f = lambda x: occ_mapping.get(x, x)
+fec.contbr_occupation = fec.contbr_occupation.map(f)
+
+
+emp_mapping = {
+    'INFORMATION REQUESTED PER BEST EFFORTS': 'NOT PROVIDED',
+    'INFORMATION REQUESTED': 'NOT PROVIDED',
+    'SELF': 'SELF-EMPLOYED',
+    'SELF EMPLOYED': 'SELF-EMPLOYED',
+}
+
+f = lambda x: emp_mapping.get(x, x)
+fec.contbr_employer = fec.contbr_employer.map(f)
+
+by_occupation = fec.pivot_table('contb_receipt_amt',
+                                index='contbr_occupation',
+                                columns='party',
+                                aggfunc='sum')
+over_2mm = by_occupation[by_occupation.sum(1) > 2000000]
+
+over_2mm.plot(kind='barh')
+
+
+def get_top_amounts(group, key, n=5):
+    totals = group.groupby(key)['contb_receipt_amt'].sum()
+    return totals.sort_values(ascending=False)[:n]
+
+grouped = fec_mrbo.groupby('cand_nm')
+grouped.apply(get_top_amounts, 'contbr_occupation', n=7)
+grouped.apply(get_top_amounts, 'contbr_employer', n=10)
+
+bins = np.array([0, 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000])
+labels = pd.cut(fec_mrbo.contb_receipt_amt, bins)
+grouped = fec_mrbo.groupby(['cand_nm', labels])
+grouped.size().unstack()
+
+bucket_sums = grouped.contb_receipt_amt.sum().unstack(0)
+normed_sums = bucket_sums.div(bucket_sums.sum(axis=1), axis=0)
+
+normed_sums[:-2].plot(kind='barh', stacked=True)
+plt.show()
+
+grouped = fec_mrbo.groupby(['cand_nm', 'contbr_st'])
+totals = grouped.contb_receipt_amt.sum().unstack(0).fillna(0)
+totals = totals[totals.sum(1) > 100000]
+percent = totals.div(totals.sum(1), axis=0)
+
