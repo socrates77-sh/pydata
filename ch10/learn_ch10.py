@@ -50,4 +50,33 @@ close_px['AAPL'].loc['2011-1': '2011-3'].plot()
 appl_q = close_px['AAPL'].resample('Q-DEC', fill_method='ffill')
 appl_q.loc['2009':].plot()
 
-#347
+close_px['AAPL'].plot()
+# pd.rolling_mean(close_px['AAPL'], 250).plot()
+close_px['AAPL'].rolling(window=250, center=False).mean().plot()
+
+appl_std250 = close_px['AAPL'].rolling(
+    window=250, center=False, min_periods=10).std()
+appl_std250.plot()
+
+fig, axes = plt.subplots(nrows=2, ncols=1, sharex=True,
+                         sharey=True, figsize=(12, 7))
+
+appl_px = close_px['AAPL']['2005':'2009']
+ma60 = pd.rolling_mean(appl_px, 60, min_periods=50)
+ewma60 = pd.ewma(appl_px, span=60)
+
+appl_px.plot(style='k-', ax=axes[0])
+ma60.plot(style='k--', ax=axes[0])
+appl_px.plot(style='k-', ax=axes[1])
+ewma60.plot(style='k--', ax=axes[1])
+axes[0].set_title('Simple MA')
+axes[1].set_title('Exponentially-weighted MA')
+
+spx_px = close_px_all['SPX']
+spx_rets = spx_px / spx_px.shift(1) - 1
+returns = close_px.pct_change()
+corr = pd.rolling_corr(returns['AAPL'], spx_rets, 125, min_periods=100)
+corr.plot()
+
+corr = pd.rolling_corr(returns, spx_rets, 125, min_periods=100)
+corr.plot()
